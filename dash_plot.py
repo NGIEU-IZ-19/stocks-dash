@@ -1,8 +1,10 @@
-
 from dash import Dash, dcc, html, Input, Output
 import pandas as pd
 import yfinance as yf
 import plotly.graph_objs as go
+import modules.stock_analytics
+from modules.stock_analytics.base import stock_technical_analytics
+
 
 def sma_company_plotly(company):
     """
@@ -10,76 +12,96 @@ def sma_company_plotly(company):
     Input: Mysql connection and company specified
     Output: Figure object
     """
-    
-    df = yf.download('AAPL', 
-                          start='2019-01-01', 
-                          end='2021-06-12', 
-                         progress=False,
-    )
 
-    df = df.reset_index()
+    bu = stock_technical_analytics(company)
 
-    for i in ['Open', 'High', 'Close', 'Low']:
-        df[i] = df[i].astype('float64')
+    df = bu.get_stock_history
+    print(df)
+    df_sma200 = bu.get_sma_200()
+    print(df_sma200)
+    df_sma50 = bu.get_sma_50()
 
-    df['SMA_10'] = df['Close'].rolling(window=10).mean()
-    df['SMA_50'] = df['Close'].rolling(window=50).mean()
-    df['SMA_200'] = df['Close'].rolling(window=200).mean()
-
-    #Create graph object Figure object with data
+    # Create graph object Figure object with data
     fig = go.Figure()
 
-    #Update layout for graph object Figure
-    fig.update_layout(title_text = 'Plotly_Plot1',
-                      xaxis_title = 'X_Axis',
-                      yaxis_title = 'Y_Axis')
+    # Update layout for graph object Figure
+    fig.update_layout(title_text='Plotly_Plot1',
+                      xaxis_title='X_Axis',
+                      yaxis_title='Y_Axis')
 
-    fig.add_trace(go.Scatter(x=df['Date'], y=df['SMA_10'],
-                    mode='lines',
-                    name='SMA_10'))
-
-    fig.add_trace(go.Scatter(x=df['Date'], y=df['SMA_50'],
-                    mode='lines',
-                    name='SMA_50'))
-    fig.add_trace(go.Scatter(x=df['Date'], y=df['SMA_200'],
-                    mode='lines',
-                    name='SMA_200'))              
-    
+    fig.add_trace(go.Scatter(x=df_sma50['Date'], y=df_sma50,
+                             mode='lines',
+                             name='SMA_50'))
+    fig.add_trace(go.Scatter(x=df_sma200['Date'], y=df_sma200,
+                             mode='lines',
+                             name='SMA_200'))
+    fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                             mode='lines',
+                             name='SMA_200'))
     return fig
 
 
-#Create DjangoDash applicaiton
-app = Dash(name='StocksPlot')
+# Create DjangoDash applicaiton
 
-#Configure app layout
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = Dash(name='StocksPlot', external_stylesheets=external_stylesheets)
+
+# Configure app layout
 app.layout = html.Div([
-                html.Div([
-                    
-                    #Add dropdown for option selection
-                    dcc.Input(id='company', value='DAL', type='text')],#Initial value for the dropdown
-                    style={'width': '25%', 'margin':'0px auto'}),
+    html.Div([
 
-                html.Div([                 
-                    dcc.Graph(id = 'stocks_plot', 
-                              animate = True, 
-                              style={"backgroundColor": "#FFF0F5"})])
-                        ])
+        # Add dropdown for option selection
+        dcc.Input(id='company', value='AAPL', type='text')],  # Initial value for the dropdown
+        style={'width': '25%', 'margin': '0px auto'}),
+    # html.Div([
 
-#Define app input and output callbacks
+    #     # Add dropdown for option selection
+    #     dcc.Input(id='year', value='2005', type='text')],  # Initial value for the dropdown
+    #     style={'width': '25%', 'margin': '0px auto'}),
+    # html.Div([
+    #
+    #     # Add dropdown for option selection
+    #     dcc.Input(id='month', value='12', type='text')],  # Initial value for the dropdown
+    #     style={'width': '25%', 'margin': '0px auto'}),
+    #
+    # html.Div([
+    #
+    #     # Add dropdown for option selection
+    #     dcc.Input(id='day', value='25', type='text')],  # Initial value for the dropdown
+    #     style={'width': '25%', 'margin': '0px auto'}),
+    #
+    # html.Div([
+    #
+    #     # Add dropdown for option selection
+    #     dcc.Input(id='period', value='5y', type='text')],  # Initial value for the dropdown
+    #     style={'width': '25%', 'margin': '0px auto'}),
+
+    # day=dt.utcnow().strftime("%d"), timedelta=1, fullPeriod=False, period='5y', interval='1d'):
+
+    html.Div([
+        dcc.Graph(id='stocks_plot',
+                  animate=True,
+                  style={"backgroundColor": "#FFF0F5"})])
+])
+
+
+# Define app input and output callbacks
 @app.callback(
-               Output('stocks_plot', 'figure'), #id of html component
-              [Input('company', 'value')]) #id of html component
-              
+    Output('stocks_plot', 'figure'),
+    Input('company', 'value')
+)
 def display_value(company):
     """
     This function returns figure object according to value input
     Input: Value specified
     Output: Figure object
     """
-    #Get company plot with input value
+    # Get company plot with input value
     fig = sma_company_plotly(company)
-    
+
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

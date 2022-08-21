@@ -18,7 +18,7 @@ import yfinance as yf
 class stock_technical_analytics:
 
     def __init__(self, instrument, year=dt.utcnow().strftime("%Y"), month=dt.utcnow().strftime("%m"),
-                 day=dt.utcnow().strftime("%d"), timedelta=1, fullPeriod=False, period='5y', interval='1d'):
+                 day=dt.utcnow().strftime("%d"), timedelta=1, fullPeriod=True, period='1y', interval='1d'):
         """
         A class that uses the yfinance api and lets you plot indicators of a stock such as:
             - History data
