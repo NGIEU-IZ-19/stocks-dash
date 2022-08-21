@@ -1,0 +1,9 @@
+Django<4.0.0,>=2.2
+plotly
+pandas
+django_plotly_dash
+channels-redis
+Werkzeug<2.1,>=2.0
+yfinance
+dash
+flask==2.1.0
