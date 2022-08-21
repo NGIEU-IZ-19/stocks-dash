@@ -1,0 +1,5 @@
+plotly
+pandas
+django_plotly_dash
+yfinance
+dash
